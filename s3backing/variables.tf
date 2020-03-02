@@ -25,4 +25,10 @@ variable "pub_priva" {
 variable "pub_privb" {
   default = "10.10.4.0/24"
 }
+variable "backingbucket" {
+  description = "name of backing bucket"
+}
+variable "backingdb" {
+  description = "name of backing db"
 
+}
