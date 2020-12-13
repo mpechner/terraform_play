@@ -21,9 +21,26 @@ data aws_subnet subnet2 {
 data "aws_availability_zones" "available" {
   state = "available"
 }
+
+module "launchgroup" {
+  source = "../../module/launch-template"
+  template_name = "wp1"
+  iam_instance_profile = ""
+  security_groups = [""]
+  cluster_ca = data.terraform_remote_state.eks-cluster.outputs.kubeconfig-certificate-authority-data
+  cluster_endpoint =data.terraform_remote_state.eks-cluster.endpoint
+  cluster_name = data.terraform_remote_state.eks-cluster.name
+  ami = ""
+  node_group = var.group_name
+}
+
 resource aws_eks_node_group nodes{
   cluster_name =  data.terraform_remote_state.eks-cluster.outputs.name
-  node_group_name = "wp"
+  node_group_name = var.group_name
+  launch_template = {
+    id = module.launchgroup.name
+    version = module.launchgroup.version
+  }
   node_role_arn = "arn:aws:iam::990880295272:role/bn_k8_node_svc_role"
   scaling_config {
     desired_size = 1
