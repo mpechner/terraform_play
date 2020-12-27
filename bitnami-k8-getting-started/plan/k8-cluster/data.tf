@@ -3,12 +3,12 @@ data aws_iam_role "k8"{
 }
 
 data aws_subnet subnet1 {
-  id = "subnet-04d557b24116f844e"
+  id = "subnet-071f296ad5cb1996d"
   vpc_id = "vpc-1fe9ec64"
 }
 
 data aws_subnet subnet2 {
-  id = "subnet-0bc41bb59ac3fd51a"
+  id = "subnet-09422dd3e1c1b80a9"
   vpc_id = "vpc-1fe9ec64"
 }
 

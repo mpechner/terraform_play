@@ -1,4 +1,7 @@
-
+resource "aws_iam_instance_profile" "profile" {
+  name = "bn_k8_node_svc_role"
+  role = "${aws_iam_role.role.id}"
+}
 
 resource "aws_iam_role" "role" {
   name = "bn_k8_node_svc_role"
@@ -22,11 +25,6 @@ EOF
 
 resource "aws_iam_role_policy_attachment" "AmazonEKSWorkerNodePolicy" {
   policy_arn = "arn:aws:iam::aws:policy/AmazonEKSWorkerNodePolicy"
-  role       = aws_iam_role.role.name
-}
-
-resource "aws_iam_role_policy_attachment" "AmazonEKS_CNI_Policy" {
-  policy_arn = "arn:aws:iam::aws:policy/AmazonEKS_CNI_Policy"
   role       = aws_iam_role.role.name
 }
 

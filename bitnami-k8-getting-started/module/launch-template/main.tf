@@ -20,12 +20,19 @@ resource aws_launch_template  eks_node {
     associate_public_ip_address  = false
     security_groups = var.security_groups
   }
+  tags = {
+    "eks:cluster-name" = var.cluster_name,
+    "eks:nodegroup-name" = var.node_group,
+    "k8s.io/cluster-autoscaler/enabled" = true,
+    "k8s.io/cluster-autoscaledr/${var.cluster_name}" = "owned",
+    "kubernetes.io/cluster/${var.cluster_name}" = "owned"
+  }
   user_data = base64encode( templatefile("${path.module}/userdata.tpl",
       {
         cluster_ca =  var.cluster_ca,
         cluster_endpoint = var.cluster_endpoint,
         cluster_name =  var.cluster_name,
-        nodegroup = var.node_group
+        nodegroup = var.node_group,
         ami = var.ami
       }
     )

@@ -9,12 +9,12 @@ data terraform_remote_state eks-cluster {
 }
 
 data aws_subnet subnet1 {
-  id = "subnet-04d557b24116f844e"
+  id = "subnet-071f296ad5cb1996d"
   vpc_id = "vpc-1fe9ec64"
 }
 
 data aws_subnet subnet2 {
-  id = "subnet-0bc41bb59ac3fd51a"
+  id = "subnet-09422dd3e1c1b80a9"
   vpc_id = "vpc-1fe9ec64"
 }
 
@@ -55,8 +55,12 @@ resource aws_eks_node_group nodes{
   }
 
   instance_types = ["t3.small"]
-  subnet_ids = [data.aws_subnet.subnet1.id]
+  subnet_ids = [data.aws_subnet.subnet1.id, data.aws_subnet.subnet2.id]
   tags = {
+    "KubernetesCluster" = data.terraform_remote_state.eks-cluster.outputs.name
+    "Name" = data.terraform_remote_state.eks-cluster.outputs.name
+  }
+  labels = {
     "KubernetesCluster" = data.terraform_remote_state.eks-cluster.outputs.name
     "Name" = data.terraform_remote_state.eks-cluster.outputs.name
   }
