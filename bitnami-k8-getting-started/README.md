@@ -1,3 +1,8 @@
+Trash all this will go with what are in these 2 tutorials as a new starting point:
+* https://aws.amazon.com/blogs/startups/from-zero-to-eks-with-terraform-and-helm/
+* https://learn.hashicorp.com/tutorials/terraform/eks
+
+
 Just is not there yet. First time playing with EKS.
 
 https://docs.bitnami.com/kubernetes/get-started-eks/
@@ -14,6 +19,7 @@ https://docs.aws.amazon.com/eks/latest/userguide/network_reqs.html#vpc-tagging
 
 Networking:
 https://docs.aws.amazon.com/eks/latest/userguide/eks-networking.html
+
 Since Nodes tak multiple IP addresses, tjhis will be required reading to fully grok
 https://docs.aws.amazon.com/eks/latest/userguide/cni-custom-network.html
 
