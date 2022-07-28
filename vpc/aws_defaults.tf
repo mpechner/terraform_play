@@ -1,5 +1,5 @@
 resource "aws_default_network_acl" "default" {
-  default_network_acl_id = aws_vpc.mikey_test.default_network_acl_id
+  default_network_acl_id = aws_vpc.demo.default_network_acl_id
 
   ingress {
     protocol   = -1
@@ -25,7 +25,7 @@ resource "aws_default_network_acl" "default" {
 }
 
 resource "aws_default_route_table" "default" {
-  default_route_table_id = aws_vpc.mikey_test.default_route_table_id
+  default_route_table_id = aws_vpc.demo.default_route_table_id
 
   tags = {
     Name = "default table"
@@ -33,7 +33,7 @@ resource "aws_default_route_table" "default" {
 }
 
 resource "aws_default_security_group" "default" {
-  vpc_id = aws_vpc.mikey_test.id
+  vpc_id = aws_vpc.demo.id
 
   ingress {
     protocol    = -1

@@ -1,15 +1,18 @@
-resource "aws_vpc" "mikey_test" {
+resource "aws_vpc" "demo" {
   cidr_block           = var.cidr
   enable_dns_hostnames = true
   enable_dns_support = true
   tags = {
-    Name       = "mikey_test"
-    le-service = "Test ELB Private Link"
+    Name       = "demo"
   }
 }
 
+resource "aws_vpc_ipv4_cidr_block_association" "secondary_cidr" {
+  vpc_id     = aws_vpc.demo.id
+  cidr_block = var.eks_cidr
+}
 resource "aws_internet_gateway" "igw" {
-  vpc_id = aws_vpc.mikey_test.id
+  vpc_id = aws_vpc.demo.id
   tags = {
     Name = "igw"
   }
@@ -37,7 +40,7 @@ resource "aws_nat_gateway" "natgw" {
 }
 
 resource "aws_subnet" "publica" {
-  vpc_id                  = aws_vpc.mikey_test.id
+  vpc_id                  = aws_vpc.demo.id
   cidr_block              = var.publica
   map_public_ip_on_launch = true
   availability_zone       = "${var.region}a"
@@ -49,7 +52,7 @@ resource "aws_subnet" "publica" {
 }
 
 resource "aws_subnet" "publicb" {
-  vpc_id                  = aws_vpc.mikey_test.id
+  vpc_id                  = aws_vpc.demo.id
   cidr_block              = var.publicb
   map_public_ip_on_launch = true
   availability_zone       = "${var.region}b"
@@ -60,8 +63,20 @@ resource "aws_subnet" "publicb" {
   depends_on = [aws_internet_gateway.igw]
 }
 
+resource "aws_subnet" "publicc" {
+  vpc_id                  = aws_vpc.demo.id
+  cidr_block              = var.publicc
+  map_public_ip_on_launch = true
+  availability_zone       = "${var.region}c"
+
+  tags = {
+    Name = "publicc"
+  }
+  depends_on = [aws_internet_gateway.igw]
+}
+
 resource "aws_subnet" "priv_puba" {
-  vpc_id            = aws_vpc.mikey_test.id
+  vpc_id            = aws_vpc.demo.id
   cidr_block        = var.pub_priva
   availability_zone = "${var.region}a"
 
@@ -71,7 +86,7 @@ resource "aws_subnet" "priv_puba" {
 }
 
 resource "aws_subnet" "priv_pubb" {
-  vpc_id            = aws_vpc.mikey_test.id
+  vpc_id            = aws_vpc.demo.id
   cidr_block        = var.pub_privb
   availability_zone = "${var.region}b"
 
@@ -80,8 +95,48 @@ resource "aws_subnet" "priv_pubb" {
   }
 }
 
+resource "aws_subnet" "priv_pubc" {
+  vpc_id            = aws_vpc.demo.id
+  cidr_block        = var.pub_privc
+  availability_zone = "${var.region}c"
+
+  tags = {
+    Name = "priv_pubc"
+  }
+}
+
+resource "aws_subnet" "priv_puba_eks" {
+  vpc_id            = aws_vpc.demo.id
+  cidr_block        = var.pub_priva_eks
+  availability_zone = "${var.region}a"
+
+  tags = {
+    Name = "priv_puba_eks"
+  }
+}
+
+resource "aws_subnet" "priv_pubb_eks" {
+  vpc_id            = aws_vpc.demo.id
+  cidr_block        = var.pub_privb_eks
+  availability_zone = "${var.region}b"
+
+  tags = {
+    Name = "priv_pubb_eks"
+  }
+}
+
+resource "aws_subnet" "priv_pubc_eks" {
+  vpc_id            = aws_vpc.demo.id
+  cidr_block        = var.pub_privc_eks
+  availability_zone = "${var.region}c"
+
+  tags = {
+    Name = "priv_pubc_eks"
+  }
+}
+
 resource "aws_route_table" "public" {
-  vpc_id = aws_vpc.mikey_test.id
+  vpc_id = aws_vpc.demo.id
 
   route {
     cidr_block = "0.0.0.0/0"
@@ -102,8 +157,13 @@ resource "aws_route_table_association" "publicb" {
   subnet_id      = aws_subnet.publicb.id
 }
 
+resource "aws_route_table_association" "publicc" {
+  route_table_id = aws_route_table.public.id
+  subnet_id      = aws_subnet.publicc.id
+}
+
 resource "aws_route_table" "pub_priv" {
-  vpc_id = aws_vpc.mikey_test.id
+  vpc_id = aws_vpc.demo.id
   route {
     cidr_block     = "0.0.0.0/0"
     nat_gateway_id = aws_nat_gateway.natgw.id
@@ -123,11 +183,44 @@ resource "aws_route_table_association" "pub_privb" {
   subnet_id      = aws_subnet.priv_pubb.id
 }
 
+resource "aws_route_table_association" "pub_privc" {
+  route_table_id = aws_route_table.pub_priv.id
+  subnet_id      = aws_subnet.priv_pubc.id
+}
+
+
+resource "aws_route_table" "eks" {
+  vpc_id = aws_vpc.demo.id
+  route {
+    cidr_block     = "0.0.0.0/0"
+    nat_gateway_id = aws_nat_gateway.natgw.id
+  }
+  tags = {
+    Name = "eks"
+  }
+}
+
+resource "aws_route_table_association" "eks_a" {
+  route_table_id = aws_route_table.eks.id
+  subnet_id      = aws_subnet.priv_puba_eks.id
+}
+
+resource "aws_route_table_association" "eks_b" {
+  route_table_id = aws_route_table.eks.id
+  subnet_id      = aws_subnet.priv_pubb_eks.id
+}
+
+resource "aws_route_table_association" "eks_c" {
+  route_table_id = aws_route_table.eks.id
+  subnet_id      = aws_subnet.priv_pubc_eks.id
+}
+
 resource "aws_network_acl" "public" {
-  vpc_id = aws_vpc.mikey_test.id
+  vpc_id = aws_vpc.demo.id
   subnet_ids = [
     aws_subnet.publica.id,
     aws_subnet.publicb.id,
+    aws_subnet.publicc.id,
   ]
   egress {
     protocol   = "tcp"
@@ -150,29 +243,60 @@ resource "aws_network_acl" "public" {
     Name = "public"
   }
 }
-
-resource "aws_security_group" "http" {
-  vpc_id      = aws_vpc.mikey_test.id
-  name        = "http"
-  description = "http"
-
-  ingress {
-    protocol    = "tcp"
-    self        = true
-    from_port   = 80
-    to_port     = 80
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-
+resource "aws_network_acl" "private" {
+  vpc_id = aws_vpc.demo.id
+  subnet_ids = [
+    aws_subnet.priv_puba.id,
+    aws_subnet.priv_pubb.id,
+    aws_subnet.priv_pubc.id,
+  ]
   egress {
-    from_port   = 0
-    to_port     = 0
-    protocol    = "-1"
-    cidr_blocks = ["0.0.0.0/0"]
+    protocol   = "tcp"
+    rule_no    = 200
+    action     = "allow"
+    from_port  = 0
+    to_port    = 65535
+    cidr_block = "0.0.0.0/0"
+  }
+  ingress {
+    protocol   = "tcp"
+    rule_no    = 100
+    action     = "allow"
+    from_port  = 0
+    to_port    = 65535
+    cidr_block = "0.0.0.0/0"
   }
 
   tags = {
-    Name = "http"
+    Name = "private"
   }
 }
 
+resource "aws_network_acl" "eks" {
+  vpc_id = aws_vpc.demo.id
+  subnet_ids = [
+    aws_subnet.priv_puba_eks.id,
+    aws_subnet.priv_pubb_eks.id,
+    aws_subnet.priv_pubc_eks.id,
+  ]
+  egress {
+    protocol   = "tcp"
+    rule_no    = 200
+    action     = "allow"
+    from_port  = 0
+    to_port    = 65535
+    cidr_block = "0.0.0.0/0"
+  }
+  ingress {
+    protocol   = "tcp"
+    rule_no    = 100
+    action     = "allow"
+    from_port  = 0
+    to_port    = 65535
+    cidr_block = "0.0.0.0/0"
+  }
+
+  tags = {
+    Name = "eks"
+  }
+}
