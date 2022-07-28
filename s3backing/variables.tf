@@ -1,9 +1,11 @@
-variable "defaultkey" {
-  default = "mikey"
+variable "profile" {
+  default = "default"
 }
-
 variable "region" {
   default = "us-east-1"
+}
+variable "defaultkey" {
+  default = "mikey"
 }
 
 variable "cidr" {
@@ -27,8 +29,9 @@ variable "pub_privb" {
 }
 variable "backingbucket" {
   description = "name of backing bucket"
+  default = "mikey-com-terraformstate"
 }
 variable "backingdb" {
   description = "name of backing db"
-
+  default = "terraform-state"
 }

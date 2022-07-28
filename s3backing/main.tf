@@ -7,48 +7,22 @@ resource "aws_dynamodb_table" "terraform_state_lock" {
     name = "LockID"
     type = "S"
   }
+  server_side_encryption {
+    enabled = true
+  }
 }
 
 resource "aws_s3_bucket" "bucket" {
   bucket = var.backingbucket
-  versioning {
-    enabled = true
-  }
-  server_side_encryption_configuration {
-    rule {
-      apply_server_side_encryption_by_default {
-        sse_algorithm = "AES256"
-      }
-    }
-  }
-  lifecycle_rule {
-    id = "default"
-    prefix  = "/"
-    enabled = true
+}
 
-    transition {
-      days          = 30
-      storage_class = "ONEZONE_IA"
-    }
+resource "aws_s3_bucket_server_side_encryption_configuration" "bucket" {
+  bucket = aws_s3_bucket.bucket.bucket
 
-    transition {
-      days          = 60
-      storage_class = "GLACIER"
-    }
-
-    noncurrent_version_transition {
-      days          = 30
-      storage_class = "ONEZONE_IA"
-    }
-
-    noncurrent_version_transition {
-      days          = 60
-      storage_class = "GLACIER"
-    }
-
-    noncurrent_version_expiration {
-      days = 90
+  rule {
+    apply_server_side_encryption_by_default {
+      kms_master_key_id = data.aws_kms_alias.s3.id
+      sse_algorithm     = "aws:kms"
     }
   }
 }
-
