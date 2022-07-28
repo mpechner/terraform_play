@@ -12,7 +12,7 @@ Since there are time when you might need more then one version of terraform,
 I install tfenv,
 [tfenv repo](https://github.com/tfutils/tfenv)
 OSX, I just ran `brew install tfenv`. Just make sure you uninstall previous 
-version of terraform. Especailly /usr/local/bin/terraform.
+version of terraform. Especially /usr/local/bin/terraform.
 
 ## Setup S3 Backing
 s3backing sets up the bucket and the dynamodb table.
@@ -37,5 +37,5 @@ private cidr and the secondary cidr for EKS PODS.
 Primary CIDR 10.0.0.016
 Secondary for CNI is 100.64.0.0/16
 
-Created seperate NACLs and routes for Public, Private and EKS.
-Not yet sure I needed to add seperate route table and NACL for EKS.  Will see.
+Created separate NACLs and routes for Public, Private and EKS.
+Not yet sure I needed to add separate route table and NACL for EKS.  Will see.
