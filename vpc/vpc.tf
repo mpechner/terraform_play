@@ -1,3 +1,10 @@
+resource aws_vpc_dhcp_options "demo_dhcpoptions" {
+  domain_name_servers = ["AmazonProvidedDNS"]
+  domain_name = "ec2.internal"
+  tags = {
+    Name = "demo_dhcp_options"
+  }
+}
 resource "aws_vpc" "demo" {
   cidr_block           = var.cidr
   enable_dns_hostnames = true
@@ -6,7 +13,10 @@ resource "aws_vpc" "demo" {
     Name       = "demo"
   }
 }
-
+resource "aws_vpc_dhcp_options_association" "dns_resolver" {
+  vpc_id          = aws_vpc.demo.id
+  dhcp_options_id = aws_vpc_dhcp_options.demo_dhcpoptions.id
+}
 resource "aws_vpc_ipv4_cidr_block_association" "secondary_cidr" {
   vpc_id     = aws_vpc.demo.id
   cidr_block = var.eks_cidr
