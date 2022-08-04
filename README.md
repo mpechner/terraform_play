@@ -39,3 +39,6 @@ Secondary for CNI is 100.64.0.0/16
 
 Created separate NACLs and routes for Public, Private and EKS.
 Not yet sure I needed to add separate route table and NACL for EKS.  Will see.
+
+# openvpn
+For demo purposes, openvpn same cost as a bastion host.  openvpn is more secure.

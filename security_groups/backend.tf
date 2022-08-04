@@ -2,7 +2,7 @@ terraform {
   backend "s3" {
     bucket = "mikey-com-terraformstate"
     dynamodb_table = "terraform-state"
-    key    = "s3backing"
+    key    = "securitygrouops"
     region = "us-east-1"
   }
 }

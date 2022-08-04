@@ -1,8 +1,7 @@
 /.idea/
 .DS_Store
-.terraform/
-terraform.tfstate
-terraform.tfstate.backup
-.terraform.tfstate.lock.info
-/s3backing/.terraform.lock.hcl
-/vpc/.terraform.lock.hcl
+**/.terraform/
+**/terraform.tfstate
+**/terraform.tfstate.backup
+**/.terraform.tfstate.lock.info
+**/.terraform.lock.hcl
