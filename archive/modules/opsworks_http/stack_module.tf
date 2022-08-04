@@ -1,3 +1,3 @@
 module "http-stack" {
-  source = "./stack"
+  source = "stack"
 }
