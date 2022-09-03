@@ -40,5 +40,18 @@ Secondary for CNI is 100.64.0.0/16
 Created separate NACLs and routes for Public, Private and EKS.
 Not yet sure I needed to add separate route table and NACL for EKS.  Will see.
 
+# keyPair
+First pass, using a pub key on my system. Should Come From Secrets Eventually.
+But atleast the keypair is not checked into the code base.
+
+# eks/eks_managed_node_group
+Is a modified copy of terraform-aws-modules/terraform-aws-eks/examples/eks_managed_node_group
+## Changes
+* does not create VPC, uses my VPC Module
+* Turned off IPV6
+* For initial play and to save money, t3.medium, not M*.larges
+
+Will keep playing. Until I am happy.
+
 # openvpn
 For demo purposes, openvpn same cost as a bastion host.  openvpn is more secure.
