@@ -55,9 +55,9 @@ resource "aws_default_security_group" "default" {
   }
 }
 
-resource "aws_default_vpc_dhcp_options" "default" {
-  tags = {
-    Name = "Default DHCP Option Set"
-  }
-}
+#resource "aws_default_vpc_dhcp_options" "default" {
+#  tags = {
+#    Name = "Default DHCP Option Set"
+#  }
+#}
 
