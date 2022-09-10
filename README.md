@@ -85,3 +85,21 @@ Then download the profile again.
 Do not reserve a public IP, free while in use, costs money to allow 
 the public IP to be dynamically allocated when ever you restart the server.
 this is for play. Obviously for production, use a resereved IP.
+
+# ToDo
+Not complete.
+- Before this list is started, look at github actions.
+- node H autoscaling
+- Pod Scaling
+- Logging
+  - promethius into Grafana
+  - Cloudwatch logging
+  - fluentd
+  - opensearch
+- Load Balancing
+  - network
+  - application
+  - classic - only until network and application is working
+- Helm
+  - zookeeker - do not need it, but the charts I see make 2888 and 3888 available on the LB. Nuts, that traffic is only requried between the nodes
+  - jenkins
