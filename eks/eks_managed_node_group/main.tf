@@ -1,16 +1,54 @@
 provider "aws" {
-  region = local.region
+  region = var.region
 }
 
 locals {
-  name            = "ex-${replace(basename(path.cwd), "_", "-")}"
+  name            = "${var.cluster_prefix}-${replace(basename(path.cwd), "_", "-")}"
   cluster_version = "1.23"
-  region          = "us-east-1"
+  priv_cidr = "10.0.0.0/16"
 
   tags = {
     Example    = local.name
     GithubRepo = "terraform-aws-eks"
     GithubOrg  = "terraform-aws-modules"
+  }
+  node_additional_rules = {
+    ingress_self_all = {
+      description = "Node to node all ports/protocols"
+      protocol    = "TCP"
+      from_port   = 22
+      to_port     = 22
+      type        = "ingress"
+      cidr_blocks = [local.priv_cidr]
+    }
+    egress_all = {
+      description      = "Node all egress"
+      protocol         = "-1"
+      from_port        = 0
+      to_port          = 0
+      type             = "egress"
+      cidr_blocks      = ["0.0.0.0/0"]
+      ipv6_cidr_blocks = ["::/0"]
+    }
+  }
+  cluster_additional_rules = {
+    ingress_self_all = {
+      description = "Node to node all ports/protocols"
+      protocol    = "TCP"
+      from_port   = 443
+      to_port     = 443
+      type        = "ingress"
+      cidr_blocks = [local.priv_cidr]
+    }
+    egress_all = {
+      description      = "Node all egress"
+      protocol         = "-1"
+      from_port        = 0
+      to_port          = 0
+      type             = "egress"
+      cidr_blocks      = ["0.0.0.0/0"]
+      ipv6_cidr_blocks = ["::/0"]
+    }
   }
 }
 
@@ -25,6 +63,7 @@ data "terraform_remote_state" "vpc"{
     region         = "us-east-1"
   }
 }
+
 ################################################################################
 # EKS Module
 ################################################################################
@@ -36,7 +75,7 @@ module "eks" {
   cluster_version                 = local.cluster_version
   cluster_endpoint_private_access = true
   cluster_endpoint_public_access  = false
-  # cluster_endpoint_public_access  = true
+  #cluster_endpoint_public_access  = true
 
   # IPV6
   cluster_ip_family = "ipv4"
@@ -66,29 +105,21 @@ module "eks" {
   }]
 
   vpc_id     = data.terraform_remote_state.vpc.outputs.vpc_id
-  subnet_ids = data.terraform_remote_state.vpc.outputs.all_private
+  subnet_ids = data.terraform_remote_state.vpc.outputs.private
 
   # Extend cluster security group rules
-  cluster_security_group_additional_rules = {
-    egress_nodes_ephemeral_ports_tcp = {
-      description                = "To node 1025-65535"
-      protocol                   = "tcp"
-      from_port                  = 1025
-      to_port                    = 65535
-      type                       = "egress"
-      source_node_security_group = true
-    }
-  }
+  cluster_security_group_additional_rules = local.cluster_additional_rules
+
 
   # Extend node-to-node security group rules
   node_security_group_additional_rules = {
     ingress_self_all = {
       description = "Node to node all ports/protocols"
-      protocol    = "-1"
-      from_port   = 0
-      to_port     = 0
+      protocol    = "TCP"
+      from_port   = 22
+      to_port     = 22
       type        = "ingress"
-      self        = true
+      cidr_blocks = [local.priv_cidr]
     }
     egress_all = {
       description      = "Node all egress"
@@ -106,6 +137,9 @@ module "eks" {
     disk_size      = 50
     # instance_types = ["m6i.large", "m5.large", "m5n.large", "m5zn.large"]
     instance_types = ["t3.medium", "t2.medium"]
+    tags = {
+      user = "mikey"
+    }
 
     # We are using the IRSA created below for permissions
     # However, we have to deploy with the policy attached FIRST (when creating a fresh cluster)
@@ -146,14 +180,29 @@ module "eks" {
         ec2_ssh_key               = var.key_pair_name
         source_security_group_ids = [aws_security_group.remote_access.id]
       }
-      launch_template_tags = {
-        name = "bottlerocket2",
-        Name = "bottlerocket3",
-      }
-      tags = {
-        name = "bottlerocket4",
-        Name = "bottlerocket5",
-      }
+      node_security_group_additional_rules = {
+    ingress_self_all = {
+      description = "Node to node all ports/protocols"
+      protocol    = "TCP"
+      from_port   = 22
+      to_port     = 22
+      type        = "ingress"
+      cidr_blocks = [local.priv_cidr]
+    }
+    egress_all = {
+      description      = "Node all egress"
+      protocol         = "-1"
+      from_port        = 0
+      to_port          = 0
+      type             = "egress"
+      cidr_blocks      = ["0.0.0.0/0"]
+      ipv6_cidr_blocks = ["::/0"]
+    }
+  }
+      min_size     = 1
+      max_size     = 6
+      desired_size = 1
+
     }
 
     # Adds to the AWS provided user data
@@ -193,19 +242,19 @@ module "eks" {
 #      EOT
 #    }
 
-    # Use existing/external launch template
-    external_lt = {
-      create_launch_template  = false
-      launch_template_name    = aws_launch_template.external.name
-      launch_template_version = aws_launch_template.external.default_version
-
-      # Remote access cannot be specified with a launch template
-      remote_access = {
-        #        ec2_ssh_key               = aws_key_pair.this.key_name
-        ec2_ssh_key               = var.key_pair_name
-        source_security_group_ids = [aws_security_group.remote_access.id]
-      }
-    }
+#    # Use existing/external launch template
+#    external_lt = {
+#      create_launch_template  = false
+#      launch_template_name    = aws_launch_template.external.name
+#      launch_template_version = aws_launch_template.external.default_version
+#
+#      # Remote access cannot be specified with a launch template
+#      remote_access = {
+#        #        ec2_ssh_key               = aws_key_pair.this.key_name
+#        ec2_ssh_key               = var.key_pair_name
+#        source_security_group_ids = [aws_security_group.remote_access.id]
+#      }
+#    }
 
     # Use a custom AMI
 #    custom_ami = {
@@ -246,7 +295,7 @@ module "eks" {
 #      name            = "complete-eks-mng"
 #      use_name_prefix = true
 #
-#      subnet_ids = data.terraform_remote_state.vpc.outputs.all_private
+#      subnet_ids = data.terraform_remote_state.vpc.outputs.private
 #
 #      min_size     = 1
 #      max_size     = 1
@@ -434,9 +483,9 @@ resource "null_resource" "patch" {
 #  version = "~> 3.0"
 #
 #  name = local.name
-#  cidr = "10.0.0.0/16"
+#  cidr = local.priv_cidr
 #
-#  azs             = ["${local.region}a", "${local.region}b", "${local.region}c"]
+#  azs             = ["${var.region}a", "${var.region}b", "${var.region}c"]
 #  private_subnets = ["10.0.1.0/24", "10.0.2.0/24", "10.0.3.0/24"]
 #  public_subnets  = ["10.0.4.0/24", "10.0.5.0/24", "10.0.6.0/24"]
 #
@@ -581,71 +630,71 @@ data "aws_iam_policy_document" "ebs" {
 # Trivia: AWS transparently creates a copy of your LaunchTemplate and actually uses that copy then for the node group. If you DONT use a custom AMI,
 # then the default user-data for bootstrapping a cluster is merged in the copy.
 
-resource "aws_launch_template" "external" {
-  name_prefix            = "external-eks-ex-"
-  description            = "EKS managed node group external launch template"
-  update_default_version = true
-
-  block_device_mappings {
-    device_name = "/dev/xvda"
-
-    ebs {
-      volume_size           = 100
-      volume_type           = "gp2"
-      delete_on_termination = true
-    }
-  }
-
-  monitoring {
-    enabled = true
-  }
-
-  network_interfaces {
-    associate_public_ip_address = false
-    delete_on_termination       = true
-  }
-
-  # if you want to use a custom AMI
-  # image_id      = var.ami_id
-
-  # If you use a custom AMI, you need to supply via user-data, the bootstrap script as EKS DOESNT merge its managed user-data then
-  # you can add more than the minimum code you see in the template, e.g. install SSM agent, see https://github.com/aws/containers-roadmap/issues/593#issuecomment-577181345
-  # (optionally you can use https://registry.terraform.io/providers/hashicorp/cloudinit/latest/docs/data-sources/cloudinit_config to render the script, example: https://github.com/terraform-aws-modules/terraform-aws-eks/pull/997#issuecomment-705286151)
-  # user_data = base64encode(data.template_file.launch_template_userdata.rendered)
-
-  tag_specifications {
-    resource_type = "instance"
-
-    tags = {
-      Name      = "external_lt"
-      CustomTag = "Instance custom tag"
-    }
-  }
-
-  tag_specifications {
-    resource_type = "volume"
-
-    tags = {
-      CustomTag = "Volume custom tag"
-    }
-  }
-
-  tag_specifications {
-    resource_type = "network-interface"
-
-    tags = {
-      CustomTag = "EKS example"
-    }
-  }
-
-  tags = {
-    CustomTag = "Launch template custom tag"
-  }
-
-  lifecycle {
-    create_before_destroy = true
-  }
-}
+#resource "aws_launch_template" "external" {
+#  name_prefix            = "external-eks-ex-"
+#  description            = "EKS managed node group external launch template"
+#  update_default_version = true
+#
+#  block_device_mappings {
+#    device_name = "/dev/xvda"
+#
+#    ebs {
+#      volume_size           = 100
+#      volume_type           = "gp2"
+#      delete_on_termination = true
+#    }
+#  }
+#
+#  monitoring {
+#    enabled = true
+#  }
+#
+#  network_interfaces {
+#    associate_public_ip_address = false
+#    delete_on_termination       = true
+#  }
+#
+#  # if you want to use a custom AMI
+#  # image_id      = var.ami_id
+#
+#  # If you use a custom AMI, you need to supply via user-data, the bootstrap script as EKS DOESNT merge its managed user-data then
+#  # you can add more than the minimum code you see in the template, e.g. install SSM agent, see https://github.com/aws/containers-roadmap/issues/593#issuecomment-577181345
+#  # (optionally you can use https://registry.terraform.io/providers/hashicorp/cloudinit/latest/docs/data-sources/cloudinit_config to render the script, example: https://github.com/terraform-aws-modules/terraform-aws-eks/pull/997#issuecomment-705286151)
+#  # user_data = base64encode(data.template_file.launch_template_userdata.rendered)
+#
+#  tag_specifications {
+#    resource_type = "instance"
+#
+#    tags = {
+#      Name      = "external_lt"
+#      CustomTag = "Instance custom tag"
+#    }
+#  }
+#
+#  tag_specifications {
+#    resource_type = "volume"
+#
+#    tags = {
+#      CustomTag = "Volume custom tag"
+#    }
+#  }
+#
+#  tag_specifications {
+#    resource_type = "network-interface"
+#
+#    tags = {
+#      CustomTag = "EKS example"
+#    }
+#  }
+#
+#  tags = {
+#    CustomTag = "Launch template custom tag"
+#  }
+#
+#  lifecycle {
+#    create_before_destroy = true
+#  }
+#}
 
 #resource "tls_private_key" "this" {
 #  algorithm = "RSA"
@@ -668,7 +717,7 @@ resource "aws_security_group" "remote_access" {
     from_port   = 22
     to_port     = 22
     protocol    = "tcp"
-    cidr_blocks = ["10.0.0.0/8"]
+    cidr_blocks = [local.priv_cidr]
   }
 
   egress {

@@ -11,6 +11,9 @@ output "eks_subnets" {
 output "vpc_id" {
   value = aws_vpc.demo.id
 }
+output "private" {
+  value = tolist(aws_network_acl.private.subnet_ids)
+}
 output "all_private" {
   value = concat ( tolist(aws_network_acl.eks.subnet_ids), tolist(aws_network_acl.private.subnet_ids) )
 }
