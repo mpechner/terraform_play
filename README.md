@@ -53,5 +53,35 @@ Is a modified copy of terraform-aws-modules/terraform-aws-eks/examples/eks_manag
 
 Will keep playing. Until I am happy.
 
+# Setting up a private cluster.
+For the cluster set
+  - cluster_endpoint_private_access = true
+  - cluster_endpoint_public_access  = false
+
+The module is not coded well enough to handle a private cluster.
+In locals I created additional security groups rules.  For the cluster on port 443 and the node, port 22. 
+Instead of self, which is current, the new rules are for the VPN, so CIDR local.priv_cidr, 10.0.0.0/16.
 # openvpn
 For demo purposes, openvpn same cost as a bastion host.  openvpn is more secure.
+
+Followed this page:
+
+https://aws.amazon.com/blogs/awsmarketplace/setting-up-openvpn-access-server-in-amazon-vpc/
+
+I used the free community 10 license image.
+
+initial ssh:  
+ssh openvpnas@…
+sudo passwd openvpn - no default password, so just set it.
+
+When connecting via chrome, assxuming you valid cert,
+type “thisisunsafe”  type, do not C&P
+
+To save money I stop  after each day's play. The public IP will change 
+each time.  
+You will need to change IP from the admin UI.  
+Then download the profile again.
+
+Do not reserve a public IP, free while in use, costs money to allow 
+the public IP to be dynamically allocated when ever you restart the server.
+this is for play. Obviously for production, use a resereved IP.
