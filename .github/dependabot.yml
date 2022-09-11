@@ -21,7 +21,7 @@ updates:
     directory: "/s3backing" # Location of package manifests
     schedule:
       interval: "weekly"
-   - package-ecosystem: "terraform" # See documentation for possible values
+  - package-ecosystem: "terraform" # See documentation for possible values
     directory: "/key_pair" # Location of package manifests
     schedule:
       interval: "weekly"          
